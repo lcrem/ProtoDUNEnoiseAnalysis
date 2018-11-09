@@ -60,6 +60,7 @@ int main(int argc, char *argv[]){
   for (int i=0; i<NUM_SAMPLES; i++) x[i] = i*dt;
 
   TGraph *sampleGraph;
+  TGraph *sampleFFT;
   bool doneGraph=false;
 
   InputTag const daq_tag{ "tpcrawdecoder", "daq", "DecoderandReco" }; 
@@ -158,6 +159,8 @@ int main(int argc, char *argv[]){
       
       if (doneGraph==false){
 	sampleGraph = new TGraph(NUM_SAMPLES, x, samples);
+	sampleFFT = FFTtools::makeRawPowerSpectrum(sampleGraph);
+
 	doneGraph=true;
       }
       
@@ -205,6 +208,7 @@ int main(int argc, char *argv[]){
   rayleighTree->AutoSave();  
 
   sampleGraph->Write("sampleGraph");
+  sampleFFT->Write("sampleFFT");
 
   TGraph *gAvgPower = new TGraph(NUM_FREQS, powX, summedPowSpec);
   gAvgPower->SetTitle("Average power spectrum;Frequency [MHz];Amplitude");
