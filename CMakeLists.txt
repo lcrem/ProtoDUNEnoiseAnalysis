@@ -28,9 +28,22 @@ else()
 endif()
 
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${UTIL_SHARE_DIR}/cmake/modules/")
+
+FIND_PACKAGE(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+  message("OPENMP FOUND")
+  add_definitions (-DACCLAIM_OPENMP)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+else() 
+  message(FATAL_ERROR "you tried to use openmp but Cmake couldn't find compiler support") 
+endif() 
+
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS RIO Net)
-#find_package(FFTW REQUIRED)
+find_package(ROOT REQUIRED COMPONENTS MathMore MathCore RIO Net Hist Tree TreePlayer Minuit Minuit2 Gui Geom Graf3d XMLIO Proof ProofPlayer)
+find_package(FFTW REQUIRED)
 
 
 #---Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
@@ -65,9 +78,9 @@ link_directories($ENV{LARCOREOBJ_LIB})
 link_directories($ENV{LARDATAOBJ_LIB})
 link_directories($ENV{NUSIMDATA_LIB})
 
-file(GLOB HEADER_FILES "AveragePowerSpectrum.h" )
+file(GLOB HEADER_FILES "AveragePowerSpectrum.h" "FancyFFTs.h")
 
-file(GLOB_RECURSE SOURCE_FILES AveragePowerSpectrum.cxx)
+file(GLOB_RECURSE SOURCE_FILES AveragePowerSpectrum.cxx FancyFFTs.cxx)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 set(DICTNAME G__${libname})

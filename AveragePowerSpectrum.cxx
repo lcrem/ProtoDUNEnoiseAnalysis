@@ -600,44 +600,50 @@ void AveragePowerSpectrum::fitRayleighHistogramOverRange(Int_t freqInd, Double_t
 
   if(h->Integral() > 0){ // Fit will fail with empty histogram
 
-    TString fitName = TString::Format("fit_%d", freqInd);
-    TF1* fit = makeRayleighFunction(fitName, xLowVal, xHighVal);
-
+    TString fitName = TString::Format("fit_%s_%d", GetName(), freqInd );
     Double_t mean = h->GetMean();
     // Mean of rayleigh distribution = sigma* (pi/2)^{0.5}
     Double_t sigGuess = mean / TMath::Sqrt(0.5*TMath::Pi());
-    
-    fit->SetParameter(1, sigGuess);
-
-    // Can't not set upper bound if setting lower bound..
-    // Therefore set the upper bound to be insanely high.
-    // fit->SetParLimits(1, 0, h->GetMean()*1e9); 
-
     Double_t histArea = h->Integral() * h->GetBinLowEdge(2);
-    fit->FixParameter(0, histArea);
-
-    h->Fit(fit, "RQ0");
     
-    // h->GetFunction(fit->GetName())->ResetBit(TF1::kNotDraw);
-    rAmplitudes[freqInd] = h->GetFunction(fit->GetName())->GetParameter(1);
-    rChiSquares[freqInd] = h->GetFunction(fit->GetName())->GetChisquare();
-    rNdf[freqInd] = h->GetFunction(fit->GetName())->GetNDF(); 
-
+    TF1* fit;
+#pragma omp critical (fit)
+    {
+      
+      fit = makeRayleighFunction(fitName, xLowVal, xHighVal);
+      
+      fit->SetParameter(1, sigGuess);
+      
+      // Can't not set upper bound if setting lower bound..
+      // Therefore set the upper bound to be insanely high.
+      // fit->SetParLimits(1, 0, h->GetMean()*1e9); 
+      
+      fit->FixParameter(0, histArea);
+      
+      h->Fit(fit, "RQ0");
+    }
+    // h->GetFunction(fitName.Data())->ResetBit(TF1::kNotDraw);
+    rAmplitudes[freqInd] = h->GetFunction(fitName.Data())->GetParameter(1);
+    rChiSquares[freqInd] = h->GetFunction(fitName.Data())->GetChisquare();
+    rNdf[freqInd] = h->GetFunction(fitName.Data())->GetNDF(); 
+    
     rChiSquaresFullRange[freqInd] = 0;
     rNdfFullRange[freqInd] = 0;
-    for(int binx=1; binx<=h->GetNbinsX(); binx++){
-      Double_t binVal = h->GetBinContent(binx);
-      Double_t binError = h->GetBinError(binx);
-      Double_t fitVal = fit->Eval(h->GetBinCenter(binx));
-      if(binError > 0){
-	Double_t chi = (binVal - fitVal)/binError;
-	rChiSquaresFullRange[freqInd] += chi*chi;
-	rNdfFullRange[freqInd]++;
-      }
-    }
+    // for(int binx=1; binx<=h->GetNbinsX(); binx++){
+    //   Double_t binVal = h->GetBinContent(binx);
+    //   Double_t binError = h->GetBinError(binx);
+    //   Double_t fitVal = fit->Eval(h->GetBinCenter(binx));
+    //   if(binError > 0){
+    // 	Double_t chi = (binVal - fitVal)/binError;
+    // 	rChiSquaresFullRange[freqInd] += chi*chi;
+    // 	rNdfFullRange[freqInd]++;
+    //   }
+    // }
     
     delete fit;
   }
+
+  
 }
 
 
