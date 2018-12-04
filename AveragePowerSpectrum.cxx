@@ -311,7 +311,7 @@ TH1D* AveragePowerSpectrum::getRayleighHistogram(Int_t freqInd){
  */
 TF1* AveragePowerSpectrum::getRayleighHistogramFit(Int_t freqInd){
   TH1D* h = hRayleighs[freqInd];
-  TString funcName = TString::Format("fit_%d", freqInd);
+  TString funcName = TString::Format("fit_%s_%d",  GetName(), freqInd);
   TF1* f = (TF1*) h->FindObject(funcName);
   return f;
 }
@@ -606,11 +606,11 @@ void AveragePowerSpectrum::fitRayleighHistogramOverRange(Int_t freqInd, Double_t
     Double_t sigGuess = mean / TMath::Sqrt(0.5*TMath::Pi());
     Double_t histArea = h->Integral() * h->GetBinLowEdge(2);
     
-    TF1* fit;
-#pragma omp critical (fit)
-    {
+    //    TF1* fit;
+// #pragma omp critical (fit)
+//     {
       
-      fit = makeRayleighFunction(fitName, xLowVal, xHighVal);
+      TF1 *fit = makeRayleighFunction(fitName, xLowVal, xHighVal);
       
       fit->SetParameter(1, sigGuess);
       
@@ -621,7 +621,7 @@ void AveragePowerSpectrum::fitRayleighHistogramOverRange(Int_t freqInd, Double_t
       fit->FixParameter(0, histArea);
       
       h->Fit(fit, "RQ0");
-    }
+      //    }
     // h->GetFunction(fitName.Data())->ResetBit(TF1::kNotDraw);
     rAmplitudes[freqInd] = h->GetFunction(fitName.Data())->GetParameter(1);
     rChiSquares[freqInd] = h->GetFunction(fitName.Data())->GetChisquare();

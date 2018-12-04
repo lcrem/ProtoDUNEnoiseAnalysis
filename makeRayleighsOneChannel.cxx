@@ -174,7 +174,7 @@ int main(int argc, char *argv[]){
   
 
   
-  avgPowSpec->rebinAllRayleighHistograms(2); // emperically determined... for now.                                                                      
+  //  avgPowSpec->rebinAllRayleighHistograms(2); // emperically determined... for now.                                                                      
   avgPowSpec->fitAllRayleighHistograms();
 
   memset(powX, 0, sizeof(powX));
@@ -192,7 +192,7 @@ int main(int argc, char *argv[]){
     rAmplitudes[ifreq] = avgPowSpec->rayleighAmplitudes[ifreq];
     rChiSquares[ifreq] = avgPowSpec->rayleighFitChiSquares[ifreq];
     rNdf[ifreq] = avgPowSpec->rayleighNdf[ifreq];
-    rChiSquaresOverNdf[ifreq] = rChiSquares[ifreq]/rNdf[ifreq];
+    rChiSquaresOverNdf[ifreq] = rChiSquares[ifreq]*1./rNdf[ifreq];
     rChiSquaresFullRange[ifreq] = avgPowSpec->rayleighFitChiSquaresFullRange[ifreq];
     rNdfFullRange[ifreq] = avgPowSpec->rayleighNdfFullRange[ifreq];
      
@@ -218,12 +218,11 @@ int main(int argc, char *argv[]){
   gRayleighAmpl->SetTitle("Rayleigh Amplitude;Frequency [MHz];Amplitude [ADC/MHz]");
   gRayleighAmpl->Write("gRayleighAmpl");
 
-  
   TGraph *gChiSquare = new TGraph(NUM_FREQS, powX, rChiSquaresOverNdf);
   gChiSquare->SetTitle("Rayleigh fit reduced chi square;Frequency [MHz];Chi square / NDF");
   gChiSquare->Write("gChiSquare");
 
-
+  fout->cd();
   TDirectory *adir = gDirectory->mkdir("RayleighDistributions");
   adir->cd();
 
@@ -233,13 +232,13 @@ int main(int argc, char *argv[]){
   }
 
 
-  fout->Close();
-  delete avgPowSpec;  
-  cout << "Done and closed" << endl;
+  // fout->Close();
+  // delete avgPowSpec;  
+  // cout << "Done and closed" << endl;
 
-  delete rayleighTree;
-  delete fout;
-  delete sampleGraph;
+  // delete rayleighTree;
+  // delete fout;
+  // delete sampleGraph;
 
   cout << "Deleting everything now just need to return" << endl;
 
