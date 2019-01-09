@@ -70,7 +70,13 @@ AveragePowerSpectrum::AveragePowerSpectrum(TString name, TString title){
 // #endif
 
     hRayleighs[freqInd] = hTemp;
+    // hDiffPhases[freqInd] = new TH1D(Form("hDiffPhases_%d", freqInd), "Differential Phases", NUM_AMPLITUDE_BINS, -TMath::Pi(), +TMath::Pi() );
+
     // hRayleighFits[freqInd] = NULL;
+
+
+    summedDifferentialPhases[freqInd] = 0;
+    summedDifferentialPhasesSq[freqInd] = 0;
 
     rayleighFitChiSquares[freqInd] = -1;
     rayleighFitChiSquaresRisingEdge[freqInd] = -1;
@@ -148,10 +154,13 @@ void AveragePowerSpectrum::getEventRayleighAmplitudes(TGraph* gr){
   // Double_t* ps = FancyFFTs::getPowerSpectrum(NUM_SAMPLES, gr->GetY(),
   // 					     NOMINAL_SAMPLING_DELTAT, FancyFFTs::kSum);
 
-  TGraph *gtempPow = FFTtools::makeRawPowerSpectrum(gr);
+  Double_t thisPhase[NUM_FREQS];
+  //  TGraph *gtempPow = FFTtools::makeRawPowerSpectrum(gr);
+  TGraph *gtempPow = makeRawPowerSpectrum(gr, thisPhase);
   Int_t length = gtempPow->GetN();
   Double_t* ps = gtempPow->GetY();
 
+  eventDiffPhases[0] = 0.;
   for(Int_t freqInd=0; freqInd < NUM_FREQS; freqInd++){
     // Double_t sqrtPSD = TMath::Sqrt(ps[freqInd]);
 
@@ -160,6 +169,7 @@ void AveragePowerSpectrum::getEventRayleighAmplitudes(TGraph* gr){
 
     eventRayleighAmplitudes[freqInd] = sqrtPSD;
     eventPowSpec[freqInd] = ps[freqInd];    
+    if (freqInd>0) eventDiffPhases[freqInd] = FFTtools::wrap(thisPhase[freqInd]-thisPhase[freqInd-1], TMath::Pi()*2., 0.);
   }
 
   delete gtempPow;
@@ -167,6 +177,42 @@ void AveragePowerSpectrum::getEventRayleighAmplitudes(TGraph* gr){
 }
 
 
+
+TGraph *AveragePowerSpectrum::makeRawPowerSpectrum(const TGraph *grWave, double phases[NUM_FREQS]) {
+
+  double *oldY = grWave->GetY();
+  double *oldX = grWave->GetX();
+  double deltaT=oldX[1]-oldX[0];
+  int length=grWave->GetN();
+  FFTWComplex *theFFT=FFTtools::doFFT(length,oldY);
+
+  int newLength=(length/2)+1;
+  double *newY = new double [newLength];
+  double *newX = new double [newLength];
+
+  double deltaF=1/(deltaT*length);
+  //    double fMax = 1/(2*deltaT);  // In GHz
+
+  double tempF=0;
+  double power=0;
+  for(int i=0;i<newLength;i++) {
+    //    float power=pow(getAbs(theFFT[i]),2);
+    power       = theFFT[i].getAbsSq();
+    phases[i]   = theFFT[i].getPhase();
+    if(i>0 && i<newLength-1) power*=2; //account for symmetry
+    newX[i]=tempF;
+    newY[i]=power;
+    tempF+=deltaF;
+  }
+
+
+  TGraph *grPower = new TGraph(newLength,newX,newY);
+  delete [] theFFT;
+  delete [] newY;
+  delete [] newX;
+  return grPower;
+
+}
 
 
 
@@ -235,6 +281,11 @@ size_t AveragePowerSpectrum::add(TGraph* gr){
 
   for(Int_t freqInd=0; freqInd < NUM_FREQS; freqInd++){
     summedPowSpec[freqInd] += eventPowSpec[freqInd];
+    summedDifferentialPhases[freqInd] += eventDiffPhases[freqInd];
+    summedDifferentialPhasesSq[freqInd] += eventDiffPhases[freqInd]*eventDiffPhases[freqInd];
+
+    // hDiffPhases[freqInd]->Fill(eventDiffPhases[freqInd]);
+
   }
   count++;
   
@@ -298,6 +349,9 @@ TH1D* AveragePowerSpectrum::getRayleighHistogram(Int_t freqInd){
   return hRayleighs[freqInd];
 }
 
+// TH1D *AveragePowerSpectrum::getDiffPhaseHistogram(Int_t freqInd){
+//   return hDiffPhases[freqInd];
+// }
 
 
 

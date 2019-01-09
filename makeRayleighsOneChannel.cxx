@@ -85,7 +85,9 @@ int main(int argc, char *argv[]){
   
   Double_t powX[NUM_FREQS];
   Double_t rAmplitudes[NUM_FREQS];
-  Double_t summedPowSpec[NUM_FREQS];
+  Double_t avgPowSpecY[NUM_FREQS];
+  Double_t avgDiffPhases[NUM_FREQS];
+  Double_t rmsDiffPhases[NUM_FREQS];
   Double_t rChiSquares[NUM_FREQS];
   Double_t rChiSquaresOverNdf[NUM_FREQS];
   Int_t rNdf[NUM_FREQS];
@@ -110,7 +112,9 @@ int main(int argc, char *argv[]){
   rayleighTree->Branch("nfreqs",        &nfreqs        , "nfreqs/I");
   rayleighTree->Branch("powX",          powX           , "powX[nfreqs]/D");
   rayleighTree->Branch("rAmplitudes",   rAmplitudes    , "rAmplitudes[nfreqs]/D");
-  rayleighTree->Branch("summedPowSpec", summedPowSpec  , "summedPowSpec[nfreqs]/D");
+  rayleighTree->Branch("avgPowSpecY",   avgPowSpecY    , "avgPowSpecY[nfreqs]/D");
+  rayleighTree->Branch("avgDiffPhases", avgDiffPhases  , "avgDiffPhases[nfreqs]/D"); 
+  rayleighTree->Branch("rmsDiffPhases", rmsDiffPhases  , "rmsDiffPhases[nfreqs]/D"); 
   rayleighTree->Branch("rChiSquares",   rChiSquares    , "rChiSquares[nfreqs]/D");
   rayleighTree->Branch("rNdf",          rNdf           , "rNdf[nfreqs]/I");
  
@@ -188,7 +192,9 @@ int main(int argc, char *argv[]){
 
     powX[ifreq] = ifreq*deltaf;
 
-    summedPowSpec[ifreq] = avgPowSpec->summedPowSpec[ifreq];
+    avgPowSpecY[ifreq] = avgPowSpec->summedPowSpec[ifreq]/(avgPowSpec->count*1.);
+    avgDiffPhases[ifreq] = avgPowSpec->summedDifferentialPhases[ifreq]/(avgPowSpec->count*1.);
+    rmsDiffPhases[ifreq] = TMath::Sqrt(avgPowSpec->summedDifferentialPhasesSq[ifreq])/(avgPowSpec->count*1.);
     rAmplitudes[ifreq] = avgPowSpec->rayleighAmplitudes[ifreq];
     rChiSquares[ifreq] = avgPowSpec->rayleighFitChiSquares[ifreq];
     rNdf[ifreq] = avgPowSpec->rayleighNdf[ifreq];
@@ -210,7 +216,7 @@ int main(int argc, char *argv[]){
   sampleGraph->Write("sampleGraph");
   sampleFFT->Write("sampleFFT");
 
-  TGraph *gAvgPower = new TGraph(NUM_FREQS, powX, summedPowSpec);
+  TGraph *gAvgPower = new TGraph(NUM_FREQS, powX, avgPowSpecY);
   gAvgPower->SetTitle("Average power spectrum;Frequency [MHz];Amplitude");
   gAvgPower->Write("gAvgPowSpectrum");
 
@@ -229,6 +235,7 @@ int main(int argc, char *argv[]){
   for (int i=0; i<NUM_FREQS; i++){
     avgPowSpec->getRayleighHistogram(i)->Write();
     avgPowSpec->getRayleighHistogramFit(i)->Write();
+    // avgPowSpec->getDiffPhaseHistogram(i)->Write();
   }
 
 

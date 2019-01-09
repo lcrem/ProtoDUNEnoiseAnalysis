@@ -87,11 +87,22 @@ class AveragePowerSpectrum : public TNamed {
   TF1* constructFitFromRayleighAmplitudeRisingEdge(Int_t freqInd);
   TF1* constructFitFromRayleighAmplitudeRisingEdgeAndHalfFalling(Int_t freqInd);  
 
+  TGraph *makeRawPowerSpectrum(const TGraph *grWave, double phases[NUM_FREQS]);
+
   Double_t deltaFMHz; //!< Difference between frequency bins in the power spectrums.
   Double_t summedPowSpec[NUM_FREQS]; //!< Sum of all power spectrum.
   TH1D* hRayleighs[NUM_FREQS]; //!< Histograms for Rayleigh distributions.
+
+  // /////// TEMP
+  // TH1D *hDiffPhases[NUM_FREQS];
+  // TH1D *getDiffPhaseHistogram(Int_t freqInd);
+  // //////// TEMP
+
   Int_t count; //!< Number of waveforms that have been added to the AveragePowerSpectrum.
   
+  Double_t summedDifferentialPhases[NUM_FREQS]; //!< Sum of all differential phases
+  Double_t summedDifferentialPhasesSq[NUM_FREQS]; //!< Sum of all differential phases
+
   Double_t rayleighFitChiSquares[NUM_FREQS]; //!< Chi squares of the Rayleigh fits.
   Double_t rayleighFitChiSquaresRisingEdge[NUM_FREQS]; //!< Chi squares of the fit to the rising egde of the Rayleigh distributions.
   Double_t rayleighFitChiSquaresRisingEdgeAndHalfFalling[NUM_FREQS]; //!< Chi squares of the fit to the leading and half the falling edge of the Rayleigh distributions.
@@ -121,8 +132,9 @@ class AveragePowerSpectrum : public TNamed {
 
   Double_t eventRayleighAmplitudes[NUM_FREQS]; //!< Rayleigh amplitudes for the last added event.
   Double_t eventPowSpec[NUM_FREQS]; //!< Power spectra for the last added event.
+  Double_t eventDiffPhases[NUM_FREQS]; //!< Differential phases for the last added event. 
 
-  ClassDef(AveragePowerSpectrum, 10); //!< ROOT's magic I/O macro
+  ClassDef(AveragePowerSpectrum, 11); //!< ROOT's magic I/O macro
 };
 
   
